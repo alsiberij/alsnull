@@ -19,6 +19,9 @@ type (
 )
 
 // NewType provides typed Type with given value if ok is true, otherwise value is considered as null
+//
+// Deprecated: second parameter is useless in current semantics. Function will be removed in future releases.
+// Try NewTypeWithValue instead
 func NewType[T SupportedTypes](value T, ok bool) Type[T] {
 	e := Type[T]{
 		ok: ok,
@@ -29,6 +32,14 @@ func NewType[T SupportedTypes](value T, ok bool) Type[T] {
 	}
 
 	return e
+}
+
+// NewTypeWithValue provides not null value of type T
+func NewTypeWithValue[T SupportedTypes](value T) Type[T] {
+	return Type[T]{
+		ok:    true,
+		value: value,
+	}
 }
 
 // ValueOrZero returns either actual value or default value for type T depending on whether Type is null
