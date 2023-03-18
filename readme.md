@@ -1,7 +1,8 @@
 # Description
-Package provides nullable types based on generics.
-Type implements `json.Marshaler` and `json.Unmarshaler` in order to serialize/deserialize JSON,
-`driver.Valuer` and `sql.Scanner` in order to be compatible with `sql/database` package.
+Package provides generic nullable types.
+<br>
+Provided types are compatible with `encoding/json` package (`json.Marshaler` and `json.Unmarshaler`)
+and partially with `sql/database` package (`sql.Scanner` and `driver.Valuer`).<br>
 ## Examples
 ### Base usage
 ```go
@@ -14,6 +15,20 @@ import (
 	"os"
 )
 
+type (
+	SimpleStructure struct {
+		I  int               `json:"i"`
+		S  null.Type[string] `json:"s"`
+		NB null.Type[bool]   `json:"nb"`
+	}
+
+	ComplicatedStructure struct {
+		F  null.Type[float64]         `json:"f"`
+		O  null.Type[SimpleStructure] `json:"o"`
+		NO null.Type[SimpleStructure] `json:"no"`
+	}
+)
+
 func main() {
 	// Default value is null,
 	// so `null` will be printed
@@ -21,20 +36,36 @@ func main() {
 	_ = json.NewEncoder(os.Stdout).Encode(nullableInt64)
 
 	// In this case we explicitly set not null value `STRING`,
-	// so "STRING" will be printed
-	var nullableString = null.NewTypeWithValue("STRING")
+	// so `"STRING"` will be printed
+	var nullableString = null.WithValue("STRING")
 	_ = json.NewEncoder(os.Stdout).Encode(nullableString)
 
-	// Unmarshalling nullable values not differs from unmarshaling primitives,
-	// but in case of having null bytes we will get null value,
-	// so the output will be {{3.14 true} {false false}}
-	// indicating that float64 has not null value of 3.14 and bool is null
-	var someStruct struct {
-		NullableFloat64 null.Type[float64] `json:"f"`
-		NullableBool64  null.Type[bool]    `json:"b"`
+	// This huge complicated structure with nullable and not nullable primitives and embedded structures
+	// will be successfully encoded as expected:
+	// {
+	//   "f":3.14,
+	//   "o":{
+	//      "i":314,
+	//      "s":"3,14",
+	//      "nb":null
+	//   },
+	//   "no":null
+	// }
+	object := ComplicatedStructure{
+		F: null.WithValue(3.14),
+		O: null.WithValue(SimpleStructure{
+			I:  314,
+			S:  null.WithValue("3,14"),
+			NB: null.Type[bool]{}, // Default is always null
+		}),
+		NO: null.Type[SimpleStructure]{}, // Default is always null
 	}
-	_ = json.Unmarshal([]byte(`{"f":3.14, "b":null}`), &someStruct)
-	fmt.Println(someStruct)
+	_ = json.NewEncoder(os.Stdout).Encode(object)
+
+	// Unmarshalling works the same way
+	var target ComplicatedStructure
+	_ = json.Unmarshal([]byte(`{"f":3.14,"o":{"i":314,"s":"3,14","nb":null},"no":null}`), &target)
+	fmt.Println(target)
 }
 ```
 Package is compatible with `sql/database` so provided nullable types can be used for either
@@ -47,14 +78,15 @@ _ = rows.Scan(&nullableInt64)
 // ...
 _, _ = conn.ExecContext(context.Background(), 'DELETE FROM table WHERE id = $1', nullableInt64)
 ```
-
-Also works with pgx.
+Compatible with `pgx`.<br>
+Keep in mind that only `int64`, `float64`, `bool`, `[]byte`, `string`, `time.Time` can be used for such purposes.
 
 ### Advanced usage
 If you want to use custom package or override type marshaling/unmarshaling you must define 
 your own `CustomJsonMarshaler` or `CustomJsonUnmarshaler`. The following example shows how to override
 json marshaling for `time.Time`:
 ```go
+
 package main
 
 import (
@@ -98,7 +130,7 @@ type TestStruct struct {
 
 func main() {
 	someStruct := TestStruct{
-		NullableTime: null.NewTypeWithValue(time.Unix(1672531200, 0)),
+		NullableTime: null.WithValue(time.Unix(1672531200, 0)),
 	}
 
 	// Json marshalling was overridden, so the result is `{"t":"01.01.2023"}`
@@ -109,7 +141,7 @@ func main() {
 	// Json unmarshalling was also overridden so not null initial value 1672531200 will be printed
 	var nextStruct TestStruct
 	_ = json.Unmarshal(b, &nextStruct)
-	fmt.Println(nextStruct.NullableTime.ValueOrZero().Unix())
+	fmt.Println(nextStruct.NullableTime.RawValue().Unix())
 }
 
 ```
