@@ -1,3 +1,5 @@
-// Package null provides nullable types that can be used either for json marshaling/unmarshaling
-// (even with non-default encoding/json) or sql/database interaction
+// Package null provides generic nullable types.
+//
+// Provided types are compatible with encoding/json (json.Marshaler and json.Unmarshaler)
+// and sql/database (sql.Scanner and driver.Valuer)
 package null
