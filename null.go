@@ -39,7 +39,7 @@ func WithValueFromPtr[T any](valuePtr *T) Type[T] {
 // RawValue returns actual value if Type is not null, default value of T otherwise.
 func (s *Type[T]) RawValue() T {
 	if !s.ok {
-		defaultValue[T]()
+		return s.DefaultValue()
 	}
 
 	return s.value
@@ -57,7 +57,7 @@ func (s *Type[T]) RawValuePtr() *T {
 // CheckedValue returns actual value and true if Type is not null, default value of T and false otherwise.
 func (s *Type[T]) CheckedValue() (T, bool) {
 	if !s.ok {
-		return defaultValue[T](), false
+		return s.DefaultValue(), false
 	}
 
 	return s.value, true
@@ -80,7 +80,7 @@ func (s *Type[T]) IsNull() bool {
 // SetNull sets Type to null.
 func (s *Type[T]) SetNull() {
 	s.ok = false
-	s.value = defaultValue[T]()
+	s.value = s.DefaultValue()
 }
 
 // SetValue sets Type to not null value v.
@@ -93,7 +93,7 @@ func (s *Type[T]) SetValue(v T) {
 func (s *Type[T]) SetValueFromPtr(valuePtr *T) {
 	if valuePtr == nil {
 		s.ok = false
-		s.value = defaultValue[T]()
+		s.value = s.DefaultValue()
 	} else {
 		s.ok = true
 		s.value = *valuePtr
@@ -113,9 +113,7 @@ func (s Type[T]) MarshalJSON() ([]byte, error) {
 func (s *Type[T]) UnmarshalJSON(b []byte) error {
 	if string(b) == string(nullBytes) {
 		s.ok = false
-
-		var v T
-		s.value = v
+		s.value = s.DefaultValue()
 	} else {
 		var v T
 		err := JsonUnmarshaler(b, &v)
@@ -148,8 +146,7 @@ func (s *Type[T]) Scan(src any) error {
 	switch src.(type) {
 	case nil:
 		s.ok = false
-		var v T
-		s.value = v
+		s.value = s.DefaultValue()
 	default:
 		v, ok := src.(T)
 		if !ok {
@@ -159,4 +156,10 @@ func (s *Type[T]) Scan(src any) error {
 		s.value = v
 	}
 	return nil
+}
+
+// DefaultValue returns default value of T
+func (s *Type[T]) DefaultValue() T {
+	var v T
+	return v
 }
