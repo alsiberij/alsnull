@@ -1,8 +1,8 @@
 # Description
 Package provides generic nullable types.
 <br>
-Provided types are compatible with `encoding/json` package (`json.Marshaler` and `json.Unmarshaler`)
-and partially with `sql/database` package (`sql.Scanner` and `driver.Valuer`).<br>
+Provided types are compatible with `encoding/json` package (`json.Marshaler`, `json.Unmarshaler`)
+and `sql/database` package (`sql.Scanner`, `driver.Valuer`).<br>
 ## Examples
 ### Base usage
 ```go
