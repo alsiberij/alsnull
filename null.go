@@ -16,16 +16,16 @@ type (
 	}
 )
 
-// NewValue returns not null value of T.
-func NewValue[T any](value T) Type[T] {
+// WithValue returns not null value of T.
+func WithValue[T any](value T) Type[T] {
 	return Type[T]{
 		ok:    true,
 		value: value,
 	}
 }
 
-// NewValueFromPtr returns null Type if valuePtr is nil, Type with actual value otherwise.
-func NewValueFromPtr[T any](valuePtr *T) Type[T] {
+// WithValueFromPtr returns null Type if valuePtr is nil, Type with actual value otherwise.
+func WithValueFromPtr[T any](valuePtr *T) Type[T] {
 	if valuePtr == nil {
 		return Type[T]{}
 	}
