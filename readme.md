@@ -72,11 +72,13 @@ Package is compatible with `sql/database` so provided nullable types can be used
 scanning as destinations, or performing query with parameters. Example:
 
 ```go
+// ...
 var nullableInt64 null.Type[int64]
 // ...
 _ = rows.Scan(&nullableInt64)
 // ...
 _, _ = conn.ExecContext(context.Background(), 'DELETE FROM table WHERE id = $1', nullableInt64)
+// ...
 ```
 Compatible with `pgx`.<br>
 Keep in mind that only `int64`, `float64`, `bool`, `[]byte`, `string`, `time.Time` can be used for such purposes.
