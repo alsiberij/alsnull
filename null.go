@@ -129,7 +129,7 @@ func (s *Type[T]) UnmarshalJSON(b []byte) error {
 }
 
 // Value implements driver.Valuer for working with database.
-// Returned error is nil only when T is one of the following types:
+// Will work as expected only when T is one of the following types:
 // int64, float64, bool, []byte, string, time.Time.
 func (s Type[T]) Value() (driver.Value, error) {
 	if !s.ok {
@@ -140,7 +140,7 @@ func (s Type[T]) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner for working with database.
-// Returned err is nil only when src is nil or underlying src type and T are one of the following types:
+// Returned err is nil only when src is nil or underlying src type and T are same and one of the following:
 // int64, float64, bool, []byte, string, time.Time.
 func (s *Type[T]) Scan(src any) error {
 	switch src.(type) {

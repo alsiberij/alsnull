@@ -3,11 +3,11 @@ package null
 import "encoding/json"
 
 type (
-	// CustomJsonMarshaler is defined in order to allow you custom (even with not encoding/json) json marshaling
+	// CustomJsonMarshaler is defined in order to allow you custom (even with not encoding/json) json marshaling.
 	//
 	// Src is always value (not a pointer), type switch may take place.
 	//
-	// Default one is JsonMarshaler
+	// Default one is JsonMarshaler.
 	//
 	// Example of implementing custom marshaler:
 	//
@@ -24,11 +24,11 @@ type (
 	//	}
 	CustomJsonMarshaler func(src any) ([]byte, error)
 
-	// CustomJsonUnmarshaler is defined in order to allow you custom (even with not encoding/json) json unmarshaling
+	// CustomJsonUnmarshaler is defined in order to allow you custom (even with not encoding/json) json unmarshaling.
 	//
 	// Dst is always pointer (not a value), type switch may take place.
 	//
-	// Default one is JsonUnmarshaler
+	// Default one is JsonUnmarshaler.
 	//
 	// Example of implementing custom unmarshaler:
 	//
@@ -53,13 +53,13 @@ type (
 
 var (
 	// JsonMarshaler is used for json marshaling. Default marshaler uses encoding/json package with no custom options.
-	// Is called only when value is considered not as null
+	// Is called only when value is not considered as null.
 	JsonMarshaler CustomJsonMarshaler = func(value any) ([]byte, error) {
 		return json.Marshal(value)
 	}
 
 	// JsonUnmarshaler is used for json unmarshaling. Default unmarshaler uses encoding/json package with no custom options.
-	// Is called only when b not equals to `null`
+	// Is called only when b not equals to `null`.
 	JsonUnmarshaler CustomJsonUnmarshaler = func(b []byte, dst any) error {
 		return json.Unmarshal(b, dst)
 	}
