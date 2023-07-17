@@ -1,31 +1,23 @@
 package null
 
-import (
-	"database/sql/driver"
-)
-
 type (
 	// Type represents a nullable type. Default value is null.
-	//
-	// Keep in mind, that only following types T are compatible with database/sql and can be used as
-	// parameters for queries or scanning destinations:
-	// int64, float64, bool, []byte, string, time.Time.
 	Type[T any] struct {
 		value T
 		ok    bool
 	}
 )
 
-// WithValue returns not null value of T.
-func WithValue[T any](value T) Type[T] {
+// Value returns not null value of T.
+func Value[T any](value T) Type[T] {
 	return Type[T]{
 		ok:    true,
 		value: value,
 	}
 }
 
-// WithValueFromPtr returns null Type if valuePtr is nil, Type with actual value otherwise.
-func WithValueFromPtr[T any](valuePtr *T) Type[T] {
+// ValueFromPtr returns null Type if valuePtr is nil, Type with actual value otherwise.
+func ValueFromPtr[T any](valuePtr *T) Type[T] {
 	if valuePtr == nil {
 		return Type[T]{}
 	}
@@ -45,12 +37,8 @@ func (s *Type[T]) RawValue() T {
 	return s.value
 }
 
-// RawValuePtr returns pointer to actual value if Type is not null, nil otherwise.
+// RawValuePtr returns pointer to actual value. Is useful only when Type is not null
 func (s *Type[T]) RawValuePtr() *T {
-	if !s.ok {
-		return nil
-	}
-
 	return &s.value
 }
 
@@ -63,13 +51,9 @@ func (s *Type[T]) CheckedValue() (T, bool) {
 	return s.value, true
 }
 
-// CheckedValuePtr returns pointer to actual value and true if Type is not null, nil and false otherwise
+// CheckedValuePtr returns pointer to actual value and true if Type is not null, false otherwise
 func (s *Type[T]) CheckedValuePtr() (*T, bool) {
-	if !s.ok {
-		return nil, false
-	}
-
-	return &s.value, true
+	return &s.value, s.ok
 }
 
 // IsNull returns true if value is null.
@@ -98,64 +82,6 @@ func (s *Type[T]) SetValueFromPtr(valuePtr *T) {
 		s.ok = true
 		s.value = *valuePtr
 	}
-}
-
-// MarshalJSON implements json.Marshaler. Uses JsonMarshaler for marshaling not null values.
-func (s Type[T]) MarshalJSON() ([]byte, error) {
-	if !s.ok {
-		return nullBytes, nil
-	}
-
-	return JsonMarshaler(s.value)
-}
-
-// UnmarshalJSON implements json.Unmarshaler. Uses JsonUnmarshaler for unmarshaling not null values.
-func (s *Type[T]) UnmarshalJSON(b []byte) error {
-	if string(b) == string(nullBytes) {
-		s.ok = false
-		s.value = s.DefaultValue()
-	} else {
-		var v T
-		err := JsonUnmarshaler(b, &v)
-		if err != nil {
-			return err
-		}
-
-		s.ok = true
-		s.value = v
-	}
-
-	return nil
-}
-
-// Value implements driver.Valuer for working with database.
-// Will work as expected only when T is one of the following types:
-// int64, float64, bool, []byte, string, time.Time.
-func (s Type[T]) Value() (driver.Value, error) {
-	if !s.ok {
-		return nil, nil
-	}
-
-	return s.value, nil
-}
-
-// Scan implements sql.Scanner for working with database.
-// Returned err is nil only when src is nil or underlying src type and T are same and one of the following:
-// int64, float64, bool, []byte, string, time.Time.
-func (s *Type[T]) Scan(src any) error {
-	switch src.(type) {
-	case nil:
-		s.ok = false
-		s.value = s.DefaultValue()
-	default:
-		v, ok := src.(T)
-		if !ok {
-			return errUnsupportedValue
-		}
-		s.ok = true
-		s.value = v
-	}
-	return nil
 }
 
 // DefaultValue returns default value of T
