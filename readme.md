@@ -1,18 +1,64 @@
 # Description
 Package provides generic nullable types.
-## Example
+## Base usage
+Example with JSON marshalling
+```go
+func main() {
+	type simpleStruct struct {
+		Int     int                `json:"int"`
+		NullInt null.Nullable[int] `json:"nullInt"`
+	}
+
+	type complicatedStruct struct {
+		NullInt     null.Nullable[int64]        `json:"nullInt"`
+		NullInt2    null.Nullable[int64]        `json:"nullInt2"`
+		NullString  null.Nullable[string]       `json:"nullString"`
+		NullString2 null.Nullable[string]       `json:"nullString2"`
+		NullTime    null.Nullable[time.Time]    `json:"nullTime"`
+		NullTime2   null.Nullable[time.Time]    `json:"nullTime2"`
+		NullStruct  null.Nullable[simpleStruct] `json:"nullStruct"`
+		NullStruct2 null.Nullable[simpleStruct] `json:"nullStruct2"`
+	}
+
+	someValue := complicatedStruct{
+		NullInt:    null.NullableValue(int64(1)),
+		NullString: null.NullableValue("ABC"),
+		NullTime:   null.NullableValue(time.Now()),
+		NullStruct: null.NullableValue(simpleStruct{
+			Int:     1,
+			NullInt: null.Nullable[int]{},
+		}),
+	}
+
+	_ = json.NewEncoder(os.Stdout).Encode(&someValue)
+}
+```
+Example with SQL handling
+```go
+// ...
+var nullableInt64 null.Nullable[int64]
+// ...
+_ = rows.Scan(&nullableInt64)
+// ...
+_, _ = conn.Exec(context.Background(), 'DELETE FROM table WHERE id = $1', &nullableInt64)
+// ...
+```
+Compatible with `pgx`.<br>
+Keep in mind that only `int64`, `float64`, `bool`, `[]byte`, `string`, `time.Time` can be used for such purposes.
+
+## Custom usage
 Base type
 ```go
 type (
-	//Nullable is defined in order to implement custom JSON marshaling and unmarshaling and database sql compatability
-	Nullable[T any] struct {
+	//MyNullable is defined in order to implement custom JSON marshaling and unmarshaling and database sql compatability
+	MyNullable[T any] struct {
 		null.Type[T]
 	}
 )
 ```
 Implementing `json.Marshaler` and `json.Unmarshaler`
 ```go
-func (t *Nullable[T]) MarshalJSON() ([]byte, error) {
+func (t *MyNullable[T]) MarshalJSON() ([]byte, error) {
     if t.IsNull() {
         return []byte("null"), nil
     }
@@ -27,7 +73,7 @@ func (t *Nullable[T]) MarshalJSON() ([]byte, error) {
     }
 }
 
-func (t *Nullable[T]) UnmarshalJSON(bytes []byte) error {
+func (t *MyNullable[T]) UnmarshalJSON(bytes []byte) error {
     if string(bytes) == "null" {
         t.SetNull()
         return nil
@@ -60,7 +106,7 @@ scanning as destinations, or performing query with parameters. Example:
 
 ```go
 // Value Implements driver.Valuer
-func (t *Nullable[T]) Value() (driver.Value, error) {
+func (t *MyNullable[T]) Value() (driver.Value, error) {
     if t.IsNull() {
         return nil, nil
     }
@@ -69,7 +115,7 @@ func (t *Nullable[T]) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner
-func (t *Nullable[T]) Scan(src any) error {
+func (t *MyNullable[T]) Scan(src any) error {
     switch src.(type) {
     case nil:
         t.SetNull()
@@ -83,15 +129,3 @@ func (t *Nullable[T]) Scan(src any) error {
     return nil
 }
 ```
-
-```go
-// ...
-var nullableInt64 Nullable[int64]
-// ...
-_ = rows.Scan(&nullableInt64)
-// ...
-_, _ = conn.Exec(context.Background(), 'DELETE FROM table WHERE id = $1', &nullableInt64)
-// ...
-```
-Compatible with `pgx`.<br>
-Keep in mind that only `int64`, `float64`, `bool`, `[]byte`, `string`, `time.Time` can be used for such purposes.

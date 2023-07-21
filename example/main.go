@@ -12,13 +12,13 @@ import (
 )
 
 type (
-	//Nullable is defined in order to implement custom JSON marshaling and unmarshaling, and sql/database compatability
-	Nullable[T any] struct {
+	//MyNullable is defined in order to implement custom JSON marshaling and unmarshaling, and sql/database compatability
+	MyNullable[T any] struct {
 		null.Type[T]
 	}
 )
 
-func (t *Nullable[T]) MarshalJSON() ([]byte, error) {
+func (t *MyNullable[T]) MarshalJSON() ([]byte, error) {
 	if t.IsNull() {
 		return []byte("null"), nil
 	}
@@ -33,7 +33,7 @@ func (t *Nullable[T]) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (t *Nullable[T]) UnmarshalJSON(bytes []byte) error {
+func (t *MyNullable[T]) UnmarshalJSON(bytes []byte) error {
 	if string(bytes) == "null" {
 		t.SetNull()
 		return nil
@@ -62,7 +62,7 @@ func (t *Nullable[T]) UnmarshalJSON(bytes []byte) error {
 }
 
 // Value Implements driver.Valuer
-func (t *Nullable[T]) Value() (driver.Value, error) {
+func (t *MyNullable[T]) Value() (driver.Value, error) {
 	if t.IsNull() {
 		return nil, nil
 	}
@@ -71,7 +71,7 @@ func (t *Nullable[T]) Value() (driver.Value, error) {
 }
 
 // Scan implements sql.Scanner
-func (t *Nullable[T]) Scan(src any) error {
+func (t *MyNullable[T]) Scan(src any) error {
 	switch src.(type) {
 	case nil:
 		t.SetNull()
@@ -88,18 +88,18 @@ func (t *Nullable[T]) Scan(src any) error {
 func main() {
 	type (
 		Item struct {
-			Id          int                 `json:"id"`
-			Code        string              `json:"code"`
-			Description Nullable[string]    `json:"description"`
-			Comment     Nullable[string]    `json:"comment"`
-			Ca          Nullable[time.Time] `json:"ca"`
-			Ua          Nullable[time.Time] `json:"ua"`
+			Id          int                   `json:"id"`
+			Code        string                `json:"code"`
+			Description MyNullable[string]    `json:"description"`
+			Comment     MyNullable[string]    `json:"comment"`
+			Ca          MyNullable[time.Time] `json:"ca"`
+			Ua          MyNullable[time.Time] `json:"ua"`
 		}
 
 		ItemAggregator struct {
-			ItemRequired     Item           `json:"item"`
-			ItemNotRequired1 Nullable[Item] `json:"itemNotRequired1"`
-			ItemNotRequired2 Nullable[Item] `json:"itemNotRequired2"`
+			ItemRequired     Item             `json:"item"`
+			ItemNotRequired1 MyNullable[Item] `json:"itemNotRequired1"`
+			ItemNotRequired2 MyNullable[Item] `json:"itemNotRequired2"`
 		}
 	)
 

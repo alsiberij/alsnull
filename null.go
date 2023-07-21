@@ -8,16 +8,16 @@ type (
 	}
 )
 
-// Value returns not null value of T.
-func Value[T any](value T) Type[T] {
+// TypeValue returns not null value of T.
+func TypeValue[T any](value T) Type[T] {
 	return Type[T]{
 		ok:    true,
 		value: value,
 	}
 }
 
-// ValueFromPtr returns null Type if valuePtr is nil, Type with actual value otherwise.
-func ValueFromPtr[T any](valuePtr *T) Type[T] {
+// TypeValueFromPtr returns null Type if valuePtr is nil, Type with actual value otherwise.
+func TypeValueFromPtr[T any](valuePtr *T) Type[T] {
 	if valuePtr == nil {
 		return Type[T]{}
 	}
