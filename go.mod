@@ -3,6 +3,7 @@ module github.com/alsiberij/alsnull
 go 1.19
 
 retract (
+	v1.2.3 //Not compatable
 	v1.2.2 //Not compatable
 	v1.2.1 //Not compatable
 	v1.2.0 //Not compatable
